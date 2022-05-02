@@ -1,28 +1,32 @@
 import * as lean from "lean-client-js-browser";
 
-console.log("hello");
+const leanJsOpts: lean.LeanJsOpts = {
+  javascript: "lean_js_js.js",
+  libraryZip: "library.zip",
+  libraryMeta: "library.info.json",
+  libraryOleanMap: "library.olean_map.json",
+  libraryKey: "library",
+  webassemblyJs: "lean_js_wasm.js",
+  webassemblyWasm: "lean_js_wasm.wasm",
+  dbName: "leanlibrary",
+};
 
 window.onload = () => {
   const p = document.createElement("p");
   p.innerText = "Look at the output in the console.";
   document.body.appendChild(p);
+  
+  const prefix = ".";
+  const opts: lean.LeanJsOpts = leanJsOpts;
 
-  const opts: lean.LeanJsOpts = {
-    javascript: "/lean_js_js.js",
-    webassemblyJs: "/lean_js_wasm.js",
-    webassemblyWasm: "/lean_js_wasm.wasm",
-    libraryZip: "/library.zip",
-  };
-
-  const transport = (window as any).Worker
-    ? new lean.WebWorkerTransport(opts)
-    : new lean.BrowserInProcessTransport(opts);
+  const transport = new lean.WebWorkerTransport(opts);
   const server = new lean.Server(transport);
   server.error.on((err) => console.log("error:", err));
   server.allMessages.on((allMessages) => console.log("messages:", allMessages.msgs));
+  // emscripten lean never fires 'tasks' (requires MULTI_THREAD)
   server.tasks.on((currentTasks) => console.log("tasks:", currentTasks.tasks));
 
-  (self as any).server = server;
+  (self as any).server = server; // allow debugging from the console
 
   server.connect();
 
